@@ -1,0 +1,19 @@
+edition = "2024"
+unstable_features = true
+
+max_width = 79
+use_small_heuristics = "Max"
+wrap_comments = true
+format_code_in_doc_comments = true
+comment_width = 79
+normalize_comments = true
+normalize_doc_attributes = true
+imports_layout = "Vertical"
+imports_granularity = "Item"
+reorder_impl_items = true
+match_arm_blocks = false
+match_block_trailing_comma = true
+use_try_shorthand = true
+use_field_init_shorthand = true
+condense_wildcard_suffixes = true
+

@@ -1,0 +1,13 @@
+# Build cache
+target
+
+# Data directory used by program
+data
+
+# Previous versions of files
+*~
+
+# Cargo timings
+cargo-timing-*.html
+cargo-timing.html
+

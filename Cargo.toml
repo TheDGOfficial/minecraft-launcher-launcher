@@ -1,0 +1,73 @@
+cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+
+[package]
+name = "minecraft-launcher-launcher"
+description = "Minecraft launcher launcher - a wrapper that launches the Minecraft launcher with tweaks for performance and stability, especially under Linux."
+version = "1.0.0"
+authors = ["Mustafa Öncel <mustafaoncel92@gmail.com>"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/TheDGOfficial/minecraft-launcher-launcher"
+readme = "README.md"
+documentation = "https://github.com/TheDGOfficial/minecraft-launcher-launcher/"
+keywords = ["minecraft launcher launcher", "minecraft launcher wrapper"]
+categories = ["games", "launchers", "wrappers"]
+
+edition = "2024"
+#TODO bump with every Rust version
+rust-version = "1.96.0"
+exclude = ["/.github/*"]
+
+[package.metadata.clippy]
+pedantic = true
+nursery = true
+
+[dependencies]
+mimalloc = { version = "0.1.48", default-features = false, features = ["v3"] }
+
+colored = { version = "3.1.1", default-features = false }
+
+home = { version = "0.5.12", default-features = false }
+
+sudo = { version = "0.6.0", default-features = false }
+
+cnproc = { version = "0.2.1", default-features = false }
+
+sysinfo = { version = "0.38.3", default-features = false, features = ["system"] }
+
+nix = { version = "0.31.1", default-features = false, features = ["process", "signal"] }
+
+[dev-dependencies]
+rev_buf_reader = { version = "0.3.0", default-features = false }
+
+[patch.crates-io]
+cnproc = { git = "https://github.com/yorodm/cnproc-rs" } # makes it so recv only returns when an event happens
+
+[profile.release]
+debug = false
+strip = true # Automatically strip symbols from the binary.
+lto = "fat"
+codegen-units = 1
+panic = "immediate-abort"
+incremental = false
+opt-level = 3
+
+[profile.release.package."*"]
+debug = false
+strip = true
+codegen-units = 1
+incremental = false
+opt-level = 3
+rustflags = ["-C", "opt-level=3", "-C", "target-cpu=native", "-Z", "tune-cpu=native", "-Z", "mir-opt-level=4", "-Z", "threads=8", "-Z", "polonius=next", "-Z", "location-detail=none", "-Z", "fmt-debug=none"]
+
+[profile.dev]
+strip = false
+lto = false
+rustflags = ["-C", "opt-level=0", "-Z", "share-generics=y", "-Z", "threads=8", "-Z", "polonius=next"]
+codegen-units = 512
+incremental = true
+
+[profile.profiling]
+inherits = "release"
+strip = false
+debug = true
+
