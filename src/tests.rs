@@ -1,7 +1,3 @@
-//#![allow(clippy::unwrap_used)]
-//#![allow(clippy::unreachable)]
-//#![allow(clippy::panic)]
-
 use std::env;
 use std::path::Path;
 use std::path::PathBuf;

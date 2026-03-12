@@ -288,7 +288,6 @@ fn kill_launcher_process(launcher_process: &Process) {
 }
 
 #[inline]
-#[expect(unused_results)]
 fn find_launcher_processes(
     mut sys: System,
     kill: bool,
@@ -305,7 +304,7 @@ fn find_launcher_processes(
         notify_error("atomic operation failure (expected false, got true)");
     }
 
-    sys.refresh_processes_specifics(
+    let _ = sys.refresh_processes_specifics(
         ProcessesToUpdate::All,
         true,
         ProcessRefreshKind::nothing()
@@ -333,8 +332,11 @@ fn find_launcher_processes(
                 .effective_user_id()
                 .is_some_and(|uid| **uid != 0)
         {
-            if launcher_process.cmd().iter().any(|arg| arg.to_string_lossy().contains("minecraft-launcher-launcher")) {
-                // This is definitely our process, we don't want to kill ourselves.
+            if launcher_process.cmd().iter().any(|arg| {
+                arg.to_string_lossy().contains("minecraft-launcher-launcher")
+            }) {
+                // This is definitely our process, we don't want to kill
+                // ourselves.
                 continue;
             }
             println!(
@@ -368,8 +370,11 @@ fn find_launcher_processes(
                 element.to_string_lossy().contains("--launcherui")
             })
         {
-            if possible_stealth_launcher_process.cmd().iter().any(|arg| arg.to_string_lossy().contains("minecraft-launcher-launcher")) {
-                // This is definitely our process, we don't want to kill ourselves.
+            if possible_stealth_launcher_process.cmd().iter().any(|arg| {
+                arg.to_string_lossy().contains("minecraft-launcher-launcher")
+            }) {
+                // This is definitely our process, we don't want to kill
+                // ourselves.
                 continue;
             }
             println!(
@@ -401,7 +406,6 @@ fn find_launcher_processes(
 }
 
 #[inline]
-#[expect(unused_results)]
 fn start_watching_java_process() {
     println!("Starting monitoring");
 
@@ -436,7 +440,7 @@ fn start_watching_java_process() {
                                             )
                                         {
                                             backup_launcher_profiles();
-                                            find_launcher_processes(sys, true, false);
+                                            let _ = find_launcher_processes(sys, true, false);
                                             restore_launcher_profiles();
                                             break;
                                         }
@@ -491,7 +495,6 @@ fn start_watching_java_process() {
 pub(crate) fn remove_javacheck() {
     if let Some(launcher_path) = utils::get_minecraft_dir() {
         let javacheck_path = launcher_path
-            .join(".minecraft")
             .join("launcher")
             .join("JavaCheck.jar");
 
@@ -510,11 +513,10 @@ pub(crate) fn remove_javacheck() {
 }
 
 #[inline]
-#[expect(unused_results)]
 fn launch_launcher() -> std::sync::mpsc::Receiver<u32> {
     let (tx, rx) = channel();
 
-    thread::spawn(move || {
+    let _ = thread::spawn(move || {
         let mut envs = HashMap::from([
             ("vblank_mode", "0"), // Improves performance
             ("__GL_SYNC_TO_VBLANK", "0"), /* Same as the above
@@ -544,12 +546,12 @@ fn launch_launcher() -> std::sync::mpsc::Receiver<u32> {
         {
             println!("Not overriding advertised GL versions.");
 
-            envs.remove("MESA_GL_VERSION_OVERRIDE");
-            envs.remove("MESA_GLES_VERSION_OVERRIDE");
-            envs.remove("MESA_GLSL_VERSION_OVERRIDE");
+            let _ = envs.remove("MESA_GL_VERSION_OVERRIDE");
+            let _ = envs.remove("MESA_GLES_VERSION_OVERRIDE");
+            let _ = envs.remove("MESA_GLSL_VERSION_OVERRIDE");
         }
 
-        envs.remove("LD_PRELOAD"); // Temporary; mimalloc causes launcher to never load.
+        let _ = envs.remove("LD_PRELOAD"); // Temporary; mimalloc causes launcher to never load.
 
         match Command::new("minecraft-launcher-real").envs(envs).spawn() {
             Ok(child) => {
