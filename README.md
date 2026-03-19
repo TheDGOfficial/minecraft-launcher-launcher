@@ -21,6 +21,8 @@ Minecraft launcher launcher - a wrapper that launches the Minecraft launcher wit
 
 - Launches the launcher with nice priority of -6 for better responsiveness of both the launcher and the game.
 
+- Launches the launcher with ionice priority of -c2 and -n0 (best-effort highest priority, but not realtime) for faster load times and better I/O latency.
+
 - Automatic install to /usr/bin/minecraft-launcher and copies the real launcher to /usr/bin/minecraft-launcher-real.
 
 # Requirements

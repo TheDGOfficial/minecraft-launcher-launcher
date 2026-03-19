@@ -122,24 +122,42 @@ fn read_pid_file_blocking() -> u32 {
 
 #[inline]
 fn renice_launcher(pid: u32) {
-    let status = Command::new("renice")
-        .arg("-n")
-        .arg("-6")           // desired priority
-        .arg("-p")
-        .arg(pid.to_string())
-        .status();
+    fn run(cmd: &str, args: &[&str], label: &str, pid: u32) {
+        let status = Command::new(cmd)
+            .args(args)
+            .status();
 
-    match status {
-        Ok(s) if s.success() => {
-            println!("Launcher PID {} priority set to -6", pid);
-        }
-        Ok(s) => {
-            eprintln!("Failed to renice PID {}: exited with {}", pid, s);
-        }
-        Err(e) => {
-            eprintln!("Failed to renice PID {}: {}", pid, e);
+        match status {
+            Ok(s) if s.success() => {
+                println!("{} for PID {} succeeded", label, pid);
+            }
+            Ok(s) => {
+                eprintln!("{} for PID {} failed: exited with {}", label, pid, s);
+            }
+            Err(e) => {
+                eprintln!("{} for PID {} failed: {}", label, pid, e);
+            }
         }
     }
+
+    let pid_str = pid.to_string();
+    let pid_ref = pid_str.as_str();
+
+    // CPU priority
+    run(
+        "renice",
+        &["-n", "-6", "-p", pid_ref],
+        "renice (-6)",
+        pid,
+    );
+
+    // I/O priority (best-effort, highest)
+    run(
+        "ionice",
+        &["-c", "2", "-n", "0", "-p", pid_ref],
+        "ionice (class 2, prio 0)",
+        pid,
+    );
 }
 
 #[inline]
