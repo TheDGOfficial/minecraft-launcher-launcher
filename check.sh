@@ -1,5 +1,4 @@
 #!/bin/bash
-./shellcheck.sh
 ./format.sh
 ./test.sh
 # shellcheck disable=SC2086

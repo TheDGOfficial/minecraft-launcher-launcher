@@ -21,7 +21,6 @@ if [[ -z "$SKIP_RUST_UPDATES" ]]; then
  cargo binstall -y --force cargo-update
  cargo install-update --git --all
 
- # shellcheck disable=SC2086
  curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
 
  if command -v podman >/dev/null 2>&1; then
