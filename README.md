@@ -80,13 +80,75 @@ A user-space thread priority tweaking daemon will improve your performance if yo
 
 For such a mod that also provides other performance enhancing features, see my other project [DarkUtils](https://github.com/TheDGOfficial/DarkUtils). The thread priority tweaker code can be found at [this file](https://github.com/TheDGOfficial/DarkUtils/blob/main/src/main/java/gg/darkutils/feat/performance/ThreadPriorityTweaker.java).
 
+# Java Wrapper
+
+Minecraft by default does not redirect HotSpot VM output to latest.log file nor the Game Output window in your launcher. To workaround this, you might redirect the error stream (which is used for errors & warnings and other informational messages from the VM) of the java command to a file.
+
+Put this to any file (do NOT overwrite the real java binary) and set your "Java Executable" in your launcher's instance settings to point into it, checkmark "Skip java runtime version check" if necessary.
+
+```bash
+#!/usr/bin/env bash
+
+# Bash Strict Mode
+set -euo pipefail
+
+# Change this so that it points to your real java binary.
+REAL_JAVA="/usr/bin/java"
+
+# Working directory is already .minecraft, so this will be the game's logs directory if set to "logs"
+LOG_DIR="logs"
+
+# Create the log folder it doesn't exist since this runs before any log4j code because we are the java binary now
+mkdir -p "${LOG_DIR}"
+
+# The log file we are saving the VM output to, do not make it latest.log
+LOG_FILE="${LOG_DIR}/java.log"
+
+# Delete previous run log file if it exists
+if [ -f "${LOG_DIR}/java.log" ]; then
+ rm "${LOG_DIR}/java.log"
+fi
+
+# Create the log file as an empty file, enough for it to be writeable
+touch "${LOG_DIR}/java.log"
+
+# Now run the real binary whilst redirecting output and preserving exit code (via the exec command)
+
+# This redirects both stderr and stdout to the log file (terminal output redirected to file)
+# This will duplicate in-game messages received in chat as log4j is printing to the original stdout
+# each received message event.
+exec "${REAL_JAVA}" "$@" >>"${LOG_FILE}" 2>&1
+```
+
+This makes it so you get useful HotSpot VM warnings that you would otherwise never know about:
+- Warnings about deprecated VM options such as `-XX:+AggressiveHeap`
+- Warnings about silently fallbacked options such as `-XX:ThreadPriorityPolicy=1` due to insufficient permissions (e.g., missing setuid 0 or cap_sys_nice), or huge pages options that can't be used (e.g., requires admin on windows and madvise on linux)
+- Warnings about terminally deprecated methods that are used, e.g., `Unsafe#objectFieldOffset`
+- Warnings about deprecated behaviour that is relied upon, e.g., final field mutation (JEP-500)
+
+You also do get warnings from anything else that writes to the syserr outside of the java code, such as:
+```
+ATTENTION: default value of option vblank_mode overridden by environment.
+```
+
+These do not show up on latest.log file, because they write the original stderr - which can't be modified after startup without wrapping the original binary or modifying the code that launches the java binary, even if you do `System#setErr` on the java side, the original stderr does not change.
+
+It even allows you to take a thread-dump without any external attach mechanism, without using jcmd, jstack or other tools. You simply send the quit signal to the JVM, which does not actually quit the application but rather perform a thread dump. This thread dump however, will not be accessible in any possible way (believe me, i tried it) unless you had access to the original syserr stream (e.g., it wasn't lost to a unconsumed runner of the command or directed to /dev/null).
+
+Simply run:
+kill -QUIT $(pidof java)
+
+(replace $(pidof java) with actual PID if you have more than 1 java process running)
+
+and check the java.log file you set in the wrapper script - and you will see the full thread dump with all the thread's states including held locks, along with other useful metrics like heap and metaspace consumption.
+
 # Recommended JVM Flags
 
 Note: You should understand all of the flags before copy and pasting this.
 
 You MUST change the libopenal.so and libglfw.so versions in the arguments if your distro ships a version other than mine, which is at the moment GLFW 3.4 and OpenAL 1.24.2.
 
-`-Xss512k -Xms768m -XX:SoftMaxHeapSize=1536m -Xmx4g -XX:+UseZGC -XX:+DisableExplicitGC -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication -XX:+PerfDisableSharedMem -XX:-UsePerfData -XX:+DisableAttachMechanism -XX:MaxDirectMemorySize=2g -XX:-DontCompileHugeMethods -XX:MaxInlineLevel=40 -XX:TypeProfileMajorReceiverPercent=30 -XX:MaxNodeLimit=240000 -XX:NodeLimitFudgeFactor=8000 -XX:AllocatePrefetchStyle=3 -XX:-JavaMonitorsInStackTrace -XX:+AllowParallelDefineClass -XX:NmethodSweepActivity=1 -Dsun.rmi.dgc.client.gcInterval=2147483647 -Dsun.rmi.dgc.server.gcInterval=2147483647 -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -Dsun.awt.enableExtraMouseButtons=false -Dsun.awt.disablegrab=true -Djdk.nio.maxCachedBufferSize=262144 -Djdk.gtk.version=3 -Djdk.util.jar.enableMultiRelease=force -Djava.net.preferIPv4Stack=true -Djava.rmi.server.randomIDs=false -Duser.language=en -Duser.country=US -Dio.netty.maxDirectMemory=2147483648 -Dorg.lwjgl.util.NoChecks=true -Dorg.lwjgl.util.NoFunctionChecks=true -Dorg.lwjgl.glfw.libname=/usr/lib/x86_64-linux-gnu/libglfw.so.3.4 -Dorg.lwjgl.openal.libname=/usr/lib/x86_64-linux-gnu/libopenal.so.1.24.2 -Dintel.driver.cmdline=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe --enable-preview --enable-native-access=ALL-UNNAMED -XX:ThreadPriorityPolicy=1 -XX:+UnlockExperimentalVMOptions -XX:+TrustFinalNonStaticFields -Xlog:async --add-modules jdk.incubator.vector`
+`-Xss512k -Xms768m -XX:SoftMaxHeapSize=1536m -Xmx4g -Xlog:async -XX:+UseZGC -XX:+DisableExplicitGC -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication -XX:+PerfDisableSharedMem -XX:-UsePerfData -XX:+DisableAttachMechanism -XX:MaxDirectMemorySize=2g -XX:-DontCompileHugeMethods -XX:MaxInlineLevel=40 -XX:TypeProfileMajorReceiverPercent=30 -XX:MaxNodeLimit=240000 -XX:NodeLimitFudgeFactor=8000 -XX:AllocatePrefetchStyle=3 -XX:-JavaMonitorsInStackTrace -XX:+AllowParallelDefineClass -XX:NmethodSweepActivity=1 -XX:+UseTransparentHugePages -Dsun.rmi.dgc.client.gcInterval=2147483647 -Dsun.rmi.dgc.server.gcInterval=2147483647 -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -Dsun.awt.enableExtraMouseButtons=false -Dsun.awt.disablegrab=true -Djdk.nio.maxCachedBufferSize=262144 -Djdk.gtk.version=3 -Djdk.util.jar.enableMultiRelease=force -Djava.net.preferIPv4Stack=true -Djava.rmi.server.randomIDs=false -Duser.language=en -Duser.country=US -Dio.netty.maxDirectMemory=2147483648 -Dorg.lwjgl.util.NoChecks=true -Dorg.lwjgl.util.NoFunctionChecks=true -Dorg.lwjgl.glfw.libname=/usr/lib/x86_64-linux-gnu/libglfw.so.3.4 -Dorg.lwjgl.openal.libname=/usr/lib/x86_64-linux-gnu/libopenal.so.1.24.2 -Dintel.driver.cmdline=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe --enable-preview --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.vector -XX:ThreadPriorityPolicy=1 -XX:+UnlockExperimentalVMOptions -XX:+TrustFinalNonStaticFields`
 
 - `-Xss512k` : Reduces thread stack size, which will reduce memory usage when lots of threads are live.
 - `-Xms768m` : Starts the game with a minimal heap while also providing fast warmup. You can also use `-Xms2m` or `-Xms4m` but it will be a bit slower warmup. Read the JEP for [G1GC](https://openjdk.org/jeps/8359211) and [ZGC](https://openjdk.org/jeps/8377305) about this for more details. There's also a way to set initial and minimum heap size seperately, see [here](https://bugs.openjdk.org/browse/JDK-8223837), but we do not use it as Minecraft always uses around 512 MB to 800 MB of memory even when idle with memory optimization mods like FerriteCore, so it is better to allocate that much memory and enforce it as the minimum memory, since realistically the app will never use any less memory.
@@ -120,3 +182,4 @@ You MUST change the libopenal.so and libglfw.so versions in the arguments if you
 - `-XX:MaxInlineLevel=40 -XX:TypeProfileMajorReceiverPercent=30` : Recommended by Intel for more Java JIT performance gains. See https://github.com/intel/optimization-zone/blob/main/software/java/configuration-optimizations.md#tuning-the-jit-compiler-forcing-compilation--inlining for details.
 - `-Xlog:async` : Makes JVM-printed messages such as GC Logging, JIT logging, HotSpot warnings, etc., use async logging. See https://bugs.openjdk.org/browse/JDK-8264323
 - `--add-modules jdk.incubator.vector` : Enables the use of optimized Vector module for SIMD. You will need a mod to take advantage of this.
+- `-XX:+UseTransparentHugePages` : Enables automatically taking advantage of Huge Pages if your kernel/OS allows it.
