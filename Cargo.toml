@@ -14,7 +14,7 @@ categories = ["games", "launchers", "wrappers"]
 
 edition = "2024"
 #TODO bump with every Rust version
-rust-version = "1.96.0"
+rust-version = "1.97.0"
 exclude = ["/.github/*"]
 
 [package.metadata.clippy]
