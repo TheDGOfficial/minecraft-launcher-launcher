@@ -80,6 +80,20 @@ A user-space thread priority tweaking daemon will improve your performance if yo
 
 For such a mod that also provides other performance enhancing features, see my other project [DarkUtils](https://github.com/TheDGOfficial/DarkUtils). The thread priority tweaker code can be found at [this file](https://github.com/TheDGOfficial/DarkUtils/blob/main/src/main/java/gg/darkutils/feat/performance/ThreadPriorityTweaker.java).
 
+# OpenAL Tweaks
+
+Create .alsoftrc at your home directory:
+
+```
+[general]
+drivers = pipewire
+hrtf-mode = ambi2
+```
+
+The default for drivers is pulse, while we try to make it use pipewire with ALSOFT_DRIVERS environment variable, having it in your config makes it global for all games using OpenAL, and even when not using our launcher wrapper to launch the game, so it is better.
+
+The hrtf-mode = ambi2 option - the launcher wrapper does not automatically add this. It reduces CPU usage heavily when using Directional Audio ON in Minecraft sound settings, compared to the default mode ("full") while still retaining good quality. According to my tests, ambi4 used nearly same CPU as full mode (~40% of a single core at a sound-busy scene), while ambi3 uses slightly less but still high CPU (~30%). ambi2 turned to be the best, using nearly same cpu as ambi1 and hrtf off (which were around 10% of a single core at a sound-busy scene). This has a big impact especially for older processors or processors with low core count on sound-busy scenes in-game, especially in multiplayer where servers implement custom sound effects.
+
 # Java Wrapper
 
 Minecraft by default does not redirect HotSpot VM output to latest.log file nor the Game Output window in your launcher. To workaround this, you might redirect the error stream (which is used for errors & warnings and other informational messages from the VM) of the java command to a file.
