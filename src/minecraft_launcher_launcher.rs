@@ -92,10 +92,9 @@ pub(crate) fn launch() -> ExitCode {
 const LAUNCHER_PID_FILE: &str = "/tmp/minecraft-launcher.pid";
 
 #[inline]
-#[must_use]
 fn write_pid_file(pid: u32) -> io::Result<()> {
     let mut file = fs::File::create(LAUNCHER_PID_FILE)?;
-    write!(file, "{}", pid)?;
+    write!(file, "{pid}")?;
     file.sync_all()?;
     Ok(())
 }
@@ -105,15 +104,13 @@ fn write_pid_file(pid: u32) -> io::Result<()> {
 fn read_pid_file_blocking() -> u32 {
     loop {
         match fs::read_to_string(LAUNCHER_PID_FILE) {
-            Ok(contents) => {
-                if let Ok(pid) = contents.trim().parse::<u32>() {
-                    return pid;
-                } else {
+            Ok(contents) => match contents.trim().parse::<u32>() {
+                Ok(pid) => return pid,
+                Err(_) => {
                     eprintln!("{}", "Launcher PID file malformed, retrying...".red());
                 }
-            }
+            },
             Err(_) => {
-                // PID file doesn't exist yet, wait a bit
                 thread::sleep(Duration::from_millis(50));
             }
         }
@@ -129,13 +126,13 @@ fn renice_launcher(pid: u32) {
 
         match status {
             Ok(s) if s.success() => {
-                println!("{} for PID {} succeeded", label, pid);
+                println!("{label} for PID {pid} succeeded");
             }
             Ok(s) => {
-                eprintln!("{} for PID {} failed: exited with {}", label, pid, s);
+                eprintln!("{label} for PID {pid} failed: exited with {s}");
             }
             Err(e) => {
-                eprintln!("{} for PID {} failed: {}", label, pid, e);
+                eprintln!("{label} for PID {pid} failed: {e}");
             }
         }
     }
