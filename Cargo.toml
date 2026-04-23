@@ -22,7 +22,7 @@ pedantic = true
 nursery = true
 
 [dependencies]
-mimalloc = { version = "0.1.48", default-features = false, features = ["v3"] }
+mimalloc = { version = "0.1.50", default-features = false }
 
 colored = { version = "3.1.1", default-features = false }
 
