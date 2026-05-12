@@ -2,10 +2,6 @@
 get_cargo_cmd() {
   BUILD_MAIN_CMD="cargo"
 
-  if [[ -n "$CROSS_COMPILE" ]]; then
-   BUILD_MAIN_CMD="cross"
-  fi
-
   PANIC_ABORT_CMDLINE="$BUILD_MAIN_CMD $1 -Z build-std=std,panic_abort -Z unstable-options -Z build-std-features="" --target=$2"
 
   if [ "$1" == "test" ]; then

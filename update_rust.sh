@@ -16,7 +16,6 @@ if [[ -z "$SKIP_RUST_UPDATES" ]]; then
  cargo install cargo-binstall
 
  cargo binstall -y --force cargo-binstall
- cargo binstall -y cross
 
  cargo binstall -y --force cargo-update
  cargo install-update --git --all
