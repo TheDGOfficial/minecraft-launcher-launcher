@@ -7,14 +7,13 @@ version = "1.0.0"
 authors = ["Mustafa Öncel <mustafaoncel92@gmail.com>"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/TheDGOfficial/minecraft-launcher-launcher"
-readme = "README.md"
 documentation = "https://github.com/TheDGOfficial/minecraft-launcher-launcher/"
 keywords = ["minecraft launcher launcher", "minecraft launcher wrapper"]
 categories = ["games", "launchers", "wrappers"]
 
 edition = "2024"
 #TODO bump with every Rust version
-rust-version = "1.99.0"
+rust-version = "1.100.0"
 exclude = ["/.github/*"]
 
 [package.metadata.clippy]
