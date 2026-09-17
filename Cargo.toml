@@ -21,7 +21,7 @@ pedantic = true
 nursery = true
 
 [dependencies]
-mimalloc = { version = "0.1.51", default-features = false }
+mimalloc = { version = "0.1.52", default-features = false }
 
 colored = { version = "3.1.1", default-features = false }
 
@@ -31,9 +31,9 @@ sudo = { version = "0.6.0", default-features = false }
 
 cnproc = { version = "0.2.1", default-features = false }
 
-sysinfo = { version = "0.39.3", default-features = false, features = ["system"] }
+sysinfo = { version = "0.39.6", default-features = false, features = ["system"] }
 
-nix = { version = "0.31.1", default-features = false, features = ["process", "signal"] }
+nix = { version = "0.31.3", default-features = false, features = ["process", "signal"] }
 
 [dev-dependencies]
 rev_buf_reader = { version = "0.3.0", default-features = false }
