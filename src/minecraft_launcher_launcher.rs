@@ -162,10 +162,20 @@ fn renice_launcher(pid: u32) {
 pub(crate) fn launch() -> ExitCode {
     let user = sudo::check() == RunningAs::User;
 
-    if user && find_launcher_processes(System::new(), false, true) {
-        println!("Already open, exiting.");
+    if user {
+        let mut sys = match System::new() {
+            Ok(sys) => sys,
+            Err(e) => {
+                notify_error(&format!("Failed to initialize sysinfo: {e}"));
+                return ExitCode::FAILURE;
+            },
+        };
 
-        return ExitCode::SUCCESS;
+        if find_launcher_processes(&mut sys, false, true) {
+            println!("Already open, exiting.");
+
+            return ExitCode::SUCCESS;
+        }
     }
 
     if user {
@@ -304,7 +314,7 @@ fn kill_launcher_process(launcher_process: &Process) {
 
 #[inline]
 fn find_launcher_processes(
-    mut sys: System,
+    sys: &mut System,
     kill: bool,
     check_parent: bool,
 ) -> bool {
@@ -426,7 +436,13 @@ fn start_watching_java_process() {
 
     match PidMonitor::new() {
         Ok(mut monitor) => {
-            let mut sys = System::new();
+            let mut sys = match System::new() {
+                Ok(sys) => sys,
+                Err(e) => {
+                    notify_error(&format!("Failed to initialize sysinfo: {e}"));
+                    return;
+                },
+            };
 
             loop {
                 if let Some(e) = monitor.recv() {
@@ -455,7 +471,7 @@ fn start_watching_java_process() {
                                             )
                                         {
                                             backup_launcher_profiles();
-                                            let _ = find_launcher_processes(sys, true, false);
+                                            let _ = find_launcher_processes(&mut sys, true, false);
                                             restore_launcher_profiles();
                                             break;
                                         }
@@ -668,7 +684,12 @@ pub(crate) fn install(binary_file_name: &str, args: &[String]) -> ExitCode {
         },
         Ok(false) => {
             backup_launcher_profiles();
-            if find_launcher_processes(System::new(), true, true) {
+            let mut sys = match System::new() {
+                Ok(sys) => sys,
+                Err(e) => return fail(&format!("Failed to initialize sysinfo: {e}")),
+            };
+
+            if find_launcher_processes(&mut sys, true, true) {
                 println!(
                     "Killed launcher to proceed with install. Please restart it after install if desired."
                 );
