@@ -70,13 +70,13 @@ You should enable the capability `CAP_SYS_NICE` for the `java` binary in that ca
 
 Keep in mind you can only do this for .deb installed java packages, as doing it to java binaries inside unzipped folder java packages will break them due to `LD_LIBRARY_PATH` to load `libjli.so` failing due to the extra capability disallowing dynamic linking for security.
 
-Use the command `sudo setcap cap_sys_nice=ep /usr/lib/jvm/java-21-openjdk-amd64/bin/java` to grant the `CAP_SYS_NICE` capability, replacing the path with your system java path that you use to launch the game. `=ep` means Effective and Permitted. You could also use `=eip` for Effective, Inheritable and Permitted but it will not do much as the game does not start new processes with the special `execve` to inherit the capability.
+Use the command `sudo setcap cap_sys_nice=ep /usr/lib/jvm/java-25-openjdk-amd64/bin/java` to grant the `CAP_SYS_NICE` capability, replacing the path with your system java path that you use to launch the game. `=ep` means Effective and Permitted. You could also use `=eip` for Effective, Inheritable and Permitted but it will not do much as the game does not start new processes with the special `execve` to inherit the capability.
 
 You must also launch the game with `-XX:ThreadPriorityPolicy=1` JVM argument when on Linux so that the JVM actually sets the priorities. You might get a warning from JVM that it requires root user, but `CAP_SYS_NICE` works just fine.
 
 # Additional Resources
 
-A user-space thread priority tweaking daemon will improve your performance if you use our wrapper and/or followed the `CAP_SYS_NICE` guide. This is should be done inside user-context java code by a mod.
+An user-space thread priority tweaking daemon will improve your performance if you use our wrapper and/or followed the `CAP_SYS_NICE` guide. This is should be done inside user-context java code by a mod.
 
 For such a mod that also provides other performance enhancing features, see my other project [DarkUtils](https://github.com/TheDGOfficial/DarkUtils). The thread priority tweaker code can be found at [this file](https://github.com/TheDGOfficial/DarkUtils/blob/main/src/main/java/gg/darkutils/feat/performance/ThreadPriorityTweaker.java).
 
