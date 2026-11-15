@@ -33,7 +33,7 @@ cnproc = { version = "0.2.1", default-features = false }
 
 sysinfo = { version = "0.40.1", default-features = false, features = ["system"] }
 
-nix = { version = "0.31.3", default-features = false, features = ["process", "signal"] }
+nix = { version = "0.32.0", default-features = false, features = ["process", "signal"] }
 
 [dev-dependencies]
 rev_buf_reader = { version = "0.3.0", default-features = false }
